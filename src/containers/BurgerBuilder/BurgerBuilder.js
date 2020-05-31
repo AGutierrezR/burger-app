@@ -3,6 +3,13 @@ import Aux from '../../hoc/Aux'
 import Burger from '../../components/Burger/Burger'
 import BurgerControls from '../../components/Burger/BuildControls/BuildControls'
 
+const INGREDIENT_PRICE = {
+  salad: 0.5,
+  cheese: 0.4,
+  meat: 1.3,
+  bacon: 0.7,
+}
+
 class BurgerBuilder extends Component {
   state = {
     ingredients: {
@@ -11,6 +18,7 @@ class BurgerBuilder extends Component {
       cheese: 0,
       meat: 0,
     },
+    totalPrice: 4,
   }
 
   addIngredientHandler = (type) => {
@@ -18,10 +26,14 @@ class BurgerBuilder extends Component {
     const updateCount = oldCount + 1
 
     const updatedIngredients = {
-      ...this.state.ingredients
+      ...this.state.ingredients,
     }
     updatedIngredients[type] = updateCount
-    this.setState({ingredients: updatedIngredients})
+    const priceAddition = INGREDIENT_PRICE[type]
+    const oldPrice = this.state.totalPrice
+    const newPrice = oldPrice + priceAddition
+
+    this.setState({ ingredients: updatedIngredients, totalPrice: newPrice })
   }
 
   removeIngredientHandler = (type) => {
@@ -32,24 +44,27 @@ class BurgerBuilder extends Component {
     const updateCount = oldCount - 1
 
     const updatedIngredients = {
-      ...this.state.ingredients
+      ...this.state.ingredients,
     }
     updatedIngredients[type] = updateCount
-    this.setState({ingredients: updatedIngredients})
+    const priceDeduction = INGREDIENT_PRICE[type]
+    const oldPrice = this.state.totalPrice
+    const newPrice = oldPrice - priceDeduction
+    this.setState({ ingredients: updatedIngredients, totalPrice: newPrice })
   }
 
   render() {
     const disabledInfo = {
-      ...this.state.ingredients
+      ...this.state.ingredients,
     }
-    for(let key in disabledInfo) {
+    for (let key in disabledInfo) {
       disabledInfo[key] = disabledInfo[key] <= 0
     }
 
     return (
       <Aux>
         <Burger ingredients={this.state.ingredients} />
-        <BurgerControls 
+        <BurgerControls
           ingredientsAdded={this.addIngredientHandler}
           ingredientRemoved={this.removeIngredientHandler}
           disabled={disabledInfo}
