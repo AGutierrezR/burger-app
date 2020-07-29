@@ -5,6 +5,7 @@ import BurgerControls from '../../components/Burger/BuildControls/BuildControls'
 import Modal from '../../components/UI/Modal/Modal'
 import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary'
 import axios from '../../axios-orders'
+import Spinner from '../../components/UI/Spinner/Spinner'
 
 const INGREDIENT_PRICE = {
   salad: 0.5,
@@ -24,11 +25,11 @@ class BurgerBuilder extends Component {
     totalPrice: 4,
     purchasable: false,
     purchasing: false,
+    loading: false,
   }
 
   updatePurchaseState(ingredients) {
-    const sum = Object.values(ingredients)
-    .reduce((sum, el) => {
+    const sum = Object.values(ingredients).reduce((sum, el) => {
       return sum + el
     }, 0)
     this.setState({ purchasable: sum > 0 })
@@ -68,7 +69,7 @@ class BurgerBuilder extends Component {
     this.updatePurchaseState(updatedIngredients)
   }
 
-  purchaseHandler () {
+  purchaseHandler() {
     this.setState({ purchasing: true })
   }
 
@@ -77,7 +78,8 @@ class BurgerBuilder extends Component {
   }
 
   purchaseContinueHandler = () => {
-    console.log('Continue');
+    console.log('Continue')
+    this.setState({ loading: true })
     const order = {
       ingredients: this.state.ingredients,
       price: this.state.totalPrice,
@@ -86,18 +88,19 @@ class BurgerBuilder extends Component {
         address: {
           street: 'Carrer',
           zipCode: 41414,
-          country: 'Spain'
+          country: 'Spain',
         },
-        email: 'test@test.com'
+        email: 'test@test.com',
       },
-      deliveryMethod: 'fastest'
+      deliveryMethod: 'fastest',
     }
-    axios.post('/orders.json', order)
-      .then(res => {
-        console.log(res);
+    axios
+      .post('/orders.json', order)
+      .then((res) => {
+        this.setState({ loading: false, purchasing: false })
       })
-      .catch(err => {
-        console.log(err);
+      .catch((err) => {
+        this.setState({ loading: false, purchasing: false })
       })
   }
 
@@ -108,16 +111,26 @@ class BurgerBuilder extends Component {
     for (let key in disabledInfo) {
       disabledInfo[key] = disabledInfo[key] <= 0
     }
+    let orderSummary = (
+      <OrderSummary
+        ingredients={this.state.ingredients}
+        purchaseCanceled={this.purchaseCancelHandler}
+        price={this.state.totalPrice}
+        purchaseContinued={this.purchaseContinueHandler}
+      />
+    )
+
+    if (this.state.loading) {
+      orderSummary = <Spinner />
+    }
 
     return (
       <Aux>
-        <Modal show={this.state.purchasing} modalClosed={this.purchaseCancelHandler}>
-          <OrderSummary 
-          ingredients={this.state.ingredients} 
-          purchaseCanceled={this.purchaseCancelHandler}
-          price={this.state.totalPrice}
-          purchaseContinued={this.purchaseContinueHandler}
-          />
+        <Modal
+          show={this.state.purchasing}
+          modalClosed={this.purchaseCancelHandler}
+        >
+          {orderSummary}
         </Modal>
         <Burger ingredients={this.state.ingredients} />
         <BurgerControls
